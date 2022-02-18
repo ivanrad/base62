@@ -117,8 +117,8 @@ func TestCorruptInput(t *testing.T) {
 		}
 		switch err := err.(type) {
 		case InputError:
-			if int(err) != tc.corruptIdx {
-				t.Errorf("Corrupted input(%q) at %v; want %v", tc.input, int(err),
+			if int64(err) != int64(tc.corruptIdx) {
+				t.Errorf("Corrupted input(%q) at %v; want %v", tc.input, int64(err),
 					tc.corruptIdx)
 			}
 		default:
@@ -147,5 +147,23 @@ func TestBigLen(t *testing.T) {
 				t.Errorf("Decoding failed at position: %v", i)
 			}
 		}
+	}
+}
+
+func TestInputTruncated(t *testing.T) {
+	buf, err := DecodeString("a")
+	if len(buf) != 0 {
+		t.Errorf("Decoded bytes: want 0; got %v", len(buf))
+	}
+	if err == nil {
+		t.Errorf("Expected InputError; got nil")
+	}
+	switch err := err.(type) {
+	case InputError:
+		if int64(err) != -1 {
+			t.Errorf("Expected input truncated InputError(-1); got %v", int64(err))
+		}
+	default:
+		t.Errorf("Unexpected error %v", err)
 	}
 }

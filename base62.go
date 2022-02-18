@@ -100,8 +100,13 @@ func EncodeToString(src []byte) string {
 type InputError int64
 
 func (e InputError) Error() string {
-	return "invalid base62 character at position " +
-		strconv.FormatInt(int64(e), 10)
+	switch int64(e) {
+	case -1:
+		return "input truncated"
+	default:
+		return "invalid base62 character at position " +
+			strconv.FormatInt(int64(e), 10)
+	}
 }
 
 // Decode writes the decoded bytes of base62-encoded src to dst, writing at
@@ -137,7 +142,7 @@ func Decode(dst, src []byte) (int, error) {
 	}
 	if bits > 0 {
 		if bits < 8 {
-			return i, InputError(i - 1)
+			return i, InputError(-1)
 		}
 		dst[i] = byte(((buf &^ 0x3f) >> (bits - 8)) | (buf & 0x3f))
 		i++
