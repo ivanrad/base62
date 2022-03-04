@@ -1,0 +1,26 @@
+linters:
+  disable:
+    - cyclop
+    - dupl
+    - exhaustivestruct
+    - forcetypeassert
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - gocyclo
+    - godox
+    - gomnd
+    - nlreturn
+    - paralleltest
+    - testpackage
+    - wsl
+    # deprecated 
+    - interfacer
+    - golint
+    - maligned
+    - scopelint
+  enable-all: true
+linters-settings:
+  varnamelen:
+    min-name-length: 1
