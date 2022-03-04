@@ -2,11 +2,12 @@ package base62
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 )
 
-// test suite based on base64_test.go from Go standard library
+// Test suite based on base64_test.go from Go standard library.
 type testPair struct {
 	decoded, encoded string
 }
@@ -115,11 +116,12 @@ func TestCorruptInput(t *testing.T) {
 			}
 			continue
 		}
-		switch err := err.(type) {
-		case InputError:
-			if int64(err) != int64(tc.corruptIdx) {
-				t.Errorf("Corrupted input(%q) at %v; want %v", tc.input, int64(err),
-					tc.corruptIdx)
+		var inputErr InputError
+		switch {
+		case errors.As(err, &inputErr):
+			if int64(inputErr) != int64(tc.corruptIdx) {
+				t.Errorf("Corrupted input(%q) at %v; want %v", tc.input,
+					int64(inputErr), tc.corruptIdx)
 			}
 		default:
 			t.Errorf("Unexpected error %v", err)
@@ -158,10 +160,12 @@ func TestInputTruncated(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected InputError; got nil")
 	}
-	switch err := err.(type) {
-	case InputError:
-		if int64(err) != -1 {
-			t.Errorf("Expected input truncated InputError(-1); got %v", int64(err))
+	var inputErr InputError
+	switch {
+	case errors.As(err, &inputErr):
+		if int64(inputErr) != -1 {
+			t.Errorf("Expected input truncated InputError(-1); got %v",
+				int64(inputErr))
 		}
 	default:
 		t.Errorf("Unexpected error %v", err)
