@@ -1,0 +1,44 @@
+name: base62 CI
+
+on: [push, pull_request]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
+    strategy:
+      matrix:
+        go: [1.17]
+
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: "go: build"
+      run: make build
+
+    - name: "go: test"
+      run: make test
+
+    - name: "go: vet"
+      run: make vet
+
+    - name: "go: gofmt"
+      run: make gofmt
+
+    - name: "go: staticcheck"
+      uses: dominikh/staticcheck-action@v1.0.0
+
+    - name: "go: golangci-lint"
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: latest
+        skip-go-installation: true
+        skip-build-cache: true
+        skip-pkg-cache: true
