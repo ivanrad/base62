@@ -25,7 +25,7 @@ staticcheck:
 
 gofmt:
 	@echo "gofmt -l ./"
-	@test -z "$(gofmt -l ./ | tee /dev/stderr)"
+	@test -z "$$(gofmt -l ./ | tee /dev/stderr)"
 
 lint:
 	golangci-lint run
