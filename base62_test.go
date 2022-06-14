@@ -3,6 +3,7 @@ package base62
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -37,6 +38,8 @@ var pairs = []testPair{
 	{"\xff\xff\xff\xff\xff", "9999999f"},
 	{"\xff\xff\xff\xff\xff\xff", "999999999H"},
 }
+
+var bigBuf []byte
 
 func TestCharToBitsTable(t *testing.T) {
 	for i := 0; i < len(charToBitsTable); i++ {
@@ -130,22 +133,17 @@ func TestCorruptInput(t *testing.T) {
 }
 
 func TestBigLen(t *testing.T) {
-	buflen := 1 << 20
-	buf := make([]byte, buflen)
-	for i := 0; i < buflen; i++ {
-		buf[i] = encodingAlphabet[i%len(encodingAlphabet)]
-	}
-	encoded := EncodeToString(buf)
+	encoded := EncodeToString(bigBuf)
 	decoded, err := DecodeString(encoded)
 	if err != nil {
 		t.Fatalf("Error while decoding: %v", err)
 	}
-	if len(decoded) != buflen {
-		t.Fatalf("Decoded length: %v; want: %v", len(decoded), buflen)
+	if len(decoded) != len(bigBuf) {
+		t.Fatalf("Decoded length: %v; want: %v", len(decoded), len(bigBuf))
 	}
-	if !bytes.Equal(buf, decoded) {
-		for i := 0; i < buflen; i++ {
-			if buf[i] != decoded[i] {
+	if !bytes.Equal(bigBuf, decoded) {
+		for i := 0; i < len(bigBuf); i++ {
+			if bigBuf[i] != decoded[i] {
 				t.Errorf("Decoding failed at position: %v", i)
 			}
 		}
@@ -169,5 +167,57 @@ func TestInputTruncated(t *testing.T) {
 		}
 	default:
 		t.Errorf("Unexpected error %v", err)
+	}
+}
+
+func BenchmarkEncodePairs(b *testing.B) {
+	for _, p := range pairs {
+		if len(p.decoded) < 10 {
+			continue
+		}
+		b.Run(fmt.Sprintf("input:%q", p.decoded), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_ = EncodeToString([]byte(p.decoded))
+			}
+		})
+	}
+}
+
+func BenchmarkDecodePairs(b *testing.B) {
+	for _, p := range pairs {
+		if len(p.decoded) < 10 {
+			continue
+		}
+		b.Run(fmt.Sprintf("input:%q", p.encoded), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				_, _ = DecodeString(p.encoded)
+			}
+		})
+	}
+}
+
+func BenchmarkEncodeBigLen(b *testing.B) {
+	encoded := make([]byte, EncodedLen(len(bigBuf)))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = Encode(encoded, bigBuf)
+	}
+}
+
+func BenchmarkDecodeBigLen(b *testing.B) {
+	encoded := make([]byte, EncodedLen(len(bigBuf)))
+	n := Encode(encoded, bigBuf)
+	encoded = encoded[:n]
+	decoded := make([]byte, len(bigBuf))
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = Decode(decoded, encoded)
+	}
+}
+
+func init() {
+	bigBuf = make([]byte, 1<<20)
+	for i := 0; i < len(bigBuf); i++ {
+		bigBuf[i] = byte(i)
 	}
 }

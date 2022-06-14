@@ -36,3 +36,6 @@ clean:
 check: vet staticcheck gofmt
 
 ci: build test check lint
+
+bench:
+	$(GOTEST) -bench=^Bench -count=5 -benchmem ./...
