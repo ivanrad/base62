@@ -60,33 +60,33 @@ func Encode(dst, src []byte) int {
 	if len(src) == 0 {
 		return 0
 	}
-	i, bits := 0, 0
+	var n, nbuf int
 	var buf uint32
 	for _, b := range src {
 		buf = (buf << 8) | uint32(b)
-		bits += 8
-		for bits >= 6 {
-			c := (buf >> (bits - 6)) & 0x3f
+		nbuf += 8
+		for nbuf >= 6 {
+			c := (buf >> (nbuf - 6)) & 0x3f
 			switch c & ^uint32(1) {
 			case 0x3e:
-				dst[i] = encodingAlphabet[61]
-				bits -= 5
+				dst[n] = encodingAlphabet[61]
+				nbuf -= 5
 			case 0x3c:
-				dst[i] = encodingAlphabet[60]
-				bits -= 5
+				dst[n] = encodingAlphabet[60]
+				nbuf -= 5
 			default:
-				dst[i] = encodingAlphabet[c]
-				bits -= 6
+				dst[n] = encodingAlphabet[c]
+				nbuf -= 6
 			}
-			i++
+			n++
 		}
 	}
-	if bits > 0 {
-		c := buf & ((1 << bits) - 1)
-		dst[i] = encodingAlphabet[c]
-		i++
+	if nbuf > 0 {
+		c := buf & ((1 << nbuf) - 1)
+		dst[n] = encodingAlphabet[c]
+		n++
 	}
-	return i
+	return n
 }
 
 // EncodeToString returns the base62 encoding of src string.
@@ -116,38 +116,37 @@ func Decode(dst, src []byte) (int, error) {
 	if len(src) == 0 {
 		return 0, nil
 	}
-
-	i, bits := 0, 0
+	var n, nbuf int
 	var buf uint32
 	for idx, b := range src {
 		k := charToBitsTable[b]
 		switch k {
 		case 0xff:
-			return i, InputError(idx)
+			return n, InputError(idx)
 		case 61:
 			buf = (buf << 5) | 0x1f
-			bits += 5
+			nbuf += 5
 		case 60:
 			buf = (buf << 5) | 0x1e
-			bits += 5
+			nbuf += 5
 		default:
 			buf = (buf << 6) | uint32(k)
-			bits += 6
+			nbuf += 6
 		}
-		for bits >= 16 {
-			dst[i] = byte(buf >> (bits - 8))
-			i++
-			bits -= 8
+		for nbuf >= 16 {
+			dst[n] = byte(buf >> (nbuf - 8))
+			n++
+			nbuf -= 8
 		}
 	}
-	if bits > 0 {
-		if bits < 8 {
-			return i, InputError(-1)
+	if nbuf > 0 {
+		if nbuf < 8 {
+			return n, InputError(-1)
 		}
-		dst[i] = byte(((buf &^ 0x3f) >> (bits - 8)) | (buf & 0x3f))
-		i++
+		dst[n] = byte(((buf &^ 0x3f) >> (nbuf - 8)) | (buf & 0x3f))
+		n++
 	}
-	return i, nil
+	return n, nil
 }
 
 // DecodeString returns the decoded bytes of base62-encoded string s.
