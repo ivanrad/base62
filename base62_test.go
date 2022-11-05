@@ -8,12 +8,9 @@ import (
 	"testing"
 )
 
-// Test suite based on base64_test.go from Go standard library.
-type testPair struct {
+var testCases = []struct {
 	decoded, encoded string
-}
-
-var pairs = []testPair{
+}{
 	{"", ""},
 	{"f", "ZC"},
 	{"fo", "ZmP"},
@@ -43,54 +40,74 @@ var bigBuf []byte
 
 func TestCharToBitsTable(t *testing.T) {
 	for i := 0; i < len(charToBitsTable); i++ {
-		want := byte(strings.IndexByte(encodingAlphabet, byte(i)))
-		got := charToBitsTable[i]
-		if got != want {
-			t.Errorf("charToBitsTable[%d] = %02x; want = %02x", i, got, want)
-		}
+		i := i
+		t.Run(fmt.Sprintf("CharToBitsTable[%d]", i), func(t *testing.T) {
+			t.Parallel()
+			want := byte(strings.IndexByte(encodingAlphabet, byte(i)))
+			got := charToBitsTable[i]
+			if got != want {
+				t.Errorf("charToBitsTable[%d] = %02x; want = %02x", i, got, want)
+			}
+		})
 	}
 }
 
 func TestEncodedLen(t *testing.T) {
-	for _, p := range pairs {
-		n := EncodedLen(len(p.decoded))
-		if n < len(p.encoded) {
-			t.Errorf("EncodedLen(%q) = %v; want greater or equal than %v", p.decoded,
-				n, len(p.encoded))
-		}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("%q", tc.decoded), func(t *testing.T) {
+			t.Parallel()
+			n := EncodedLen(len(tc.decoded))
+			if n < len(tc.encoded) {
+				t.Errorf("EncodedLen(%q) = %v; want greater or equal than %v", tc.decoded,
+					n, len(tc.encoded))
+			}
+		})
 	}
 }
 
 func TestDecodedLen(t *testing.T) {
-	for _, p := range pairs {
-		n := DecodedLen(len(p.encoded))
-		if n < len(p.decoded) {
-			t.Errorf("DecodedLen(%q) = %v; want greater or equal than %v", p.encoded,
-				n, len(p.decoded))
-		}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("%q", tc.encoded), func(t *testing.T) {
+			t.Parallel()
+			n := DecodedLen(len(tc.encoded))
+			if n < len(tc.decoded) {
+				t.Errorf("DecodedLen(%q) = %v; want greater or equal than %v", tc.encoded,
+					n, len(tc.decoded))
+			}
+		})
 	}
 }
 
 func TestEncodePairs(t *testing.T) {
-	for _, p := range pairs {
-		encoded := EncodeToString([]byte(p.decoded))
-		if encoded != p.encoded {
-			t.Errorf("EncodeToString(%q) = %q; want: %q", p.decoded, encoded,
-				p.encoded)
-		}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("%q to %q", tc.decoded, tc.encoded), func(t *testing.T) {
+			t.Parallel()
+			encoded := EncodeToString([]byte(tc.decoded))
+			if encoded != tc.encoded {
+				t.Errorf("EncodeToString(%q) = %q; want: %q", tc.decoded, encoded,
+					tc.encoded)
+			}
+		})
 	}
 }
 
 func TestDecodePairs(t *testing.T) {
-	for _, p := range pairs {
-		decoded, err := DecodeString(p.encoded)
-		if err != nil {
-			t.Fatalf("Error while decoding(%q): %v", p.encoded, err)
-		}
-		if string(decoded) != p.decoded {
-			t.Errorf("DecodeString(%q) = %q; wanted: %q", p.encoded, string(decoded),
-				p.decoded)
-		}
+	for _, tc := range testCases {
+		tc := tc
+		t.Run(fmt.Sprintf("%q to %q", tc.encoded, tc.decoded), func(t *testing.T) {
+			t.Parallel()
+			decoded, err := DecodeString(tc.encoded)
+			if err != nil {
+				t.Fatalf("Error while decoding(%q): %v", tc.encoded, err)
+			}
+			if string(decoded) != tc.decoded {
+				t.Errorf("DecodeString(%q) = %q; wanted: %q", tc.encoded, string(decoded),
+					tc.decoded)
+			}
+		})
 	}
 }
 
@@ -112,23 +129,25 @@ func TestCorruptInput(t *testing.T) {
 		{"    ", 0},
 	}
 	for _, tc := range testCases {
-		_, err := DecodeString(tc.input)
-		if tc.corruptIdx == -1 {
-			if err != nil {
+		tc := tc
+		t.Run(fmt.Sprintf("%q", tc.input), func(t *testing.T) {
+			t.Parallel()
+			_, err := DecodeString(tc.input)
+			var inputErr InputError
+			switch {
+			case err == nil && tc.corruptIdx == -1:
+				// input ok
+			case errors.As(err, &inputErr):
+				if int64(inputErr) != int64(tc.corruptIdx) {
+					t.Errorf("Corrupted input(%q) at %v; want %v", tc.input,
+						int64(inputErr), tc.corruptIdx)
+				}
+			case err != nil && tc.corruptIdx == -1:
 				t.Errorf("Corrupted input(%q): %v", tc.input, err)
+			default:
+				t.Errorf("Unexpected error %v", err)
 			}
-			continue
-		}
-		var inputErr InputError
-		switch {
-		case errors.As(err, &inputErr):
-			if int64(inputErr) != int64(tc.corruptIdx) {
-				t.Errorf("Corrupted input(%q) at %v; want %v", tc.input,
-					int64(inputErr), tc.corruptIdx)
-			}
-		default:
-			t.Errorf("Unexpected error %v", err)
-		}
+		})
 	}
 }
 
@@ -138,10 +157,10 @@ func TestBigLen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error while decoding: %v", err)
 	}
-	if len(decoded) != len(bigBuf) {
-		t.Fatalf("Decoded length: %v; want: %v", len(decoded), len(bigBuf))
-	}
 	if !bytes.Equal(bigBuf, decoded) {
+		if len(decoded) != len(bigBuf) {
+			t.Fatalf("Decoded length: %v; want: %v", len(decoded), len(bigBuf))
+		}
 		for i := 0; i < len(bigBuf); i++ {
 			if bigBuf[i] != decoded[i] {
 				t.Errorf("Decoding failed at position: %v", i)
@@ -155,9 +174,6 @@ func TestInputTruncated(t *testing.T) {
 	if len(buf) != 0 {
 		t.Errorf("Decoded bytes: want 0; got %v", len(buf))
 	}
-	if err == nil {
-		t.Errorf("Expected InputError; got nil")
-	}
 	var inputErr InputError
 	switch {
 	case errors.As(err, &inputErr):
@@ -166,31 +182,31 @@ func TestInputTruncated(t *testing.T) {
 				int64(inputErr))
 		}
 	default:
-		t.Errorf("Unexpected error %v", err)
+		t.Errorf("Expected InputError; got %v", err)
 	}
 }
 
 func BenchmarkEncodePairs(b *testing.B) {
-	for _, p := range pairs {
-		if len(p.decoded) < 10 {
+	for _, tc := range testCases {
+		if len(tc.decoded) < 10 {
 			continue
 		}
-		b.Run(fmt.Sprintf("input:%q", p.decoded), func(b *testing.B) {
+		b.Run(fmt.Sprintf("input:%q", tc.decoded), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_ = EncodeToString([]byte(p.decoded))
+				_ = EncodeToString([]byte(tc.decoded))
 			}
 		})
 	}
 }
 
 func BenchmarkDecodePairs(b *testing.B) {
-	for _, p := range pairs {
-		if len(p.decoded) < 10 {
+	for _, tc := range testCases {
+		if len(tc.decoded) < 10 {
 			continue
 		}
-		b.Run(fmt.Sprintf("input:%q", p.encoded), func(b *testing.B) {
+		b.Run(fmt.Sprintf("input:%q", tc.encoded), func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				_, _ = DecodeString(p.encoded)
+				_, _ = DecodeString(tc.encoded)
 			}
 		})
 	}

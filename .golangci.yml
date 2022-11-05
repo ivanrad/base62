@@ -15,11 +15,17 @@ linters:
     - paralleltest
     - testpackage
     - wsl
+    - tparallel
     # deprecated 
     - interfacer
     - golint
     - maligned
     - scopelint
+    - structcheck
+    - varcheck
+    - deadcode
+    - ifshort
+    - nosnakecase
   enable-all: true
 linters-settings:
   varnamelen:
