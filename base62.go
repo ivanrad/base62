@@ -2,9 +2,7 @@
 package base62
 
 import (
-	"reflect"
 	"strconv"
-	"unsafe"
 )
 
 const encodingAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -99,7 +97,7 @@ func EncodeToString(src []byte) string {
 	dst := make([]byte, EncodedLen(len(src)))
 	n := Encode(dst, src)
 	dst = dst[:n]
-	return *(*string)(unsafe.Pointer(&dst))
+	return byteSliceToString(dst)
 }
 
 // InputError is returned if base62-encoded input contains malformed data.
@@ -160,8 +158,7 @@ func DecodeString(s string) ([]byte, error) {
 	if len(s) == 0 {
 		return []byte{}, nil
 	}
-	src := unsafe.Slice((*byte)(unsafe.Pointer(
-		(*reflect.StringHeader)(unsafe.Pointer(&s)).Data)), len(s))
+	src := stringToByteSlice(s)
 	dst := make([]byte, DecodedLen(len(src)))
 	n, err := Decode(dst, src)
 	return dst[:n], err
