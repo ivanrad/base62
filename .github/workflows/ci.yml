@@ -9,7 +9,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     strategy:
       matrix:
-        go: [1.17, 1.18, 1.19]
+        go: [1.19.x, 1.20.x]
 
     steps:
     - name: Set up Go
