@@ -30,3 +30,19 @@ linters:
 linters-settings:
   varnamelen:
     min-name-length: 1
+  depguard:
+    rules:
+      main:
+        files:
+          - $all
+          - "!$test"
+        allow:
+          - $gostd
+        deny:
+      test:
+        files:
+          - $test
+        allow:
+          - $gostd
+          - "github.com/ivanrad/base62"
+        deny:
