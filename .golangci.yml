@@ -1,35 +1,34 @@
 linters:
-  disable:
-    - cyclop
+  disable-all: true
+  enable:
+    - depguard
     - dupl
-    - exhaustivestruct
-    - forcetypeassert
-    - funlen
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - gocyclo
-    - godox
-    - gomnd
-    - nlreturn
+    - durationcheck
+    - exhaustive
+    - exportloopref
+    - gci
+    - gocritic
+    - godot
+    - goimports
+    - gomoddirectives
+    - importas
+    - ineffassign
+    - makezero
+    - misspell
+    - nakedret
+    - nilerr
+    - prealloc
+    - predeclared
+    - revive
+    - stylecheck
     - paralleltest
-    - testpackage
-    - wsl
     - tparallel
-    # deprecated 
-    - interfacer
-    - golint
-    - maligned
-    - scopelint
-    - structcheck
-    - varcheck
-    - deadcode
-    - ifshort
-    - nosnakecase
-  enable-all: true
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - whitespace
 linters-settings:
-  varnamelen:
-    min-name-length: 1
   depguard:
     rules:
       main:
