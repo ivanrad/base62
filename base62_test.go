@@ -39,6 +39,8 @@ var testCases = []struct {
 var bigBuf []byte
 
 func TestCharToBitsTable(t *testing.T) {
+	t.Parallel()
+
 	for i := 0; i < len(charToBitsTable); i++ {
 		i := i
 		t.Run(fmt.Sprintf("CharToBitsTable[%d]", i), func(t *testing.T) {
@@ -53,6 +55,8 @@ func TestCharToBitsTable(t *testing.T) {
 }
 
 func TestEncodedLen(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("%q", tc.decoded), func(t *testing.T) {
@@ -67,6 +71,8 @@ func TestEncodedLen(t *testing.T) {
 }
 
 func TestDecodedLen(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("%q", tc.encoded), func(t *testing.T) {
@@ -81,6 +87,8 @@ func TestDecodedLen(t *testing.T) {
 }
 
 func TestEncodePairs(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("%q to %q", tc.decoded, tc.encoded), func(t *testing.T) {
@@ -95,6 +103,8 @@ func TestEncodePairs(t *testing.T) {
 }
 
 func TestDecodePairs(t *testing.T) {
+	t.Parallel()
+
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(fmt.Sprintf("%q to %q", tc.encoded, tc.decoded), func(t *testing.T) {
@@ -112,6 +122,8 @@ func TestDecodePairs(t *testing.T) {
 }
 
 func TestCorruptInput(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		input      string
 		corruptIdx int
@@ -152,6 +164,8 @@ func TestCorruptInput(t *testing.T) {
 }
 
 func TestBigLen(t *testing.T) {
+	t.Parallel()
+
 	encoded := EncodeToString(bigBuf)
 	decoded, err := DecodeString(encoded)
 	if err != nil {
@@ -170,6 +184,8 @@ func TestBigLen(t *testing.T) {
 }
 
 func TestInputTruncated(t *testing.T) {
+	t.Parallel()
+
 	buf, err := DecodeString("a")
 	if len(buf) != 0 {
 		t.Errorf("Decoded bytes: want 0; got %v", len(buf))
